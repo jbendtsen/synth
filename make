@@ -1,4 +1,4 @@
 #!/bin/sh
 
-gcc *.c -o jams
+gcc *.c -lm -ljack -o jams
 

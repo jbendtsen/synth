@@ -45,7 +45,7 @@ void talloc_close(Temp_Allocator *alloc)
 static jack_port_t *input_port = NULL;
 static jack_port_t *output_port = NULL;
 
-static Playback state;
+static Playback state = {0};
 
 int audio_callback(jack_nframes_t n_frames, void *extra)
 {
@@ -65,9 +65,9 @@ int audio_callback(jack_nframes_t n_frames, void *extra)
         u8 *buf = talloc_get(&state.alloc, len);
         for (int j = 0; j < len; j++) {
             buf[j] = ev.buffer[j];
-            printf("%02x ", buf[j]);
+            //printf("%02x ", buf[j]);
         }
-        putchar('\n');
+        //putchar('\n');
 
         state.events[i].time = ev.time;
         state.events[i].size = len;
@@ -76,6 +76,7 @@ int audio_callback(jack_nframes_t n_frames, void *extra)
 
     talloc_pad_to_next(&state.alloc, sizeof(void*));
     synthesize(&state, output, n_frames);
+    state.position += (u64)n_frames;
     return 0;
 }
 
@@ -118,6 +119,8 @@ int main(int argc, char **argv)
     int read_exit_fd = make_exit_pipe();
     signal(SIGINT, handle_sigint);
 
+    init_synthesizer(&state);
+
     jack_client_t *client = jack_client_open("Jams", JackNullOption, NULL);
     if (!client) {
         printf("Failed to connect to JACK server\n");
@@ -136,6 +139,10 @@ int main(int argc, char **argv)
         printf("Failed to activate JACK client (%d)\n", res);
         return 1;
     }
+
+    jack_connect(client, "system:midi_capture_1", jack_port_name(input_port));
+    jack_connect(client, jack_port_name(output_port), "system:playback_1");
+    jack_connect(client, jack_port_name(output_port), "system:playback_2");
 
     char code = 0;
     read(read_exit_fd, &code, 1);
