@@ -71,7 +71,7 @@ void synthesize(Playback *play, float *out, int n_samples)
 {
     int ev_idx = 0;
     for (int i = 0; i < n_samples; i++) {
-        if (play->events && ev_idx >= 0 && i == play->events[ev_idx].time) {
+        while (play->events && ev_idx >= 0 && i == play->events[ev_idx].time) {
             update_playback(play, (u64)i, ev_idx);
             if (ev_idx < 0 || ev_idx >= play->n_events-1)
                 ev_idx = -1;
