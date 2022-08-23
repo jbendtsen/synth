@@ -14,16 +14,35 @@ static void square(Playback *play, u64 offset, int note_idx, Sample_Info *s) {
     double temp;
     pos = modf(pos / ((float)play->sample_rate / frequencies[note_idx]), &temp);
 
-    s->sample += pos >= 0.5 ? -0.5 : 0.5;
+    float sample = pos >= 0.5 ? -0.2 : 0.2;
 
     float vel = (float)note->in_vel / 127.0;
-    vel = 0.5 + (vel / 2.0);
-    s->sample *= vel;
+    vel = 0.33 + (vel * 0.67);
 
+    s->sample += sample * vel;
+    s->volume += vel;
+}
+
+static void sawtooth(Playback *play, u64 offset, int note_idx, Sample_Info *s) {
+    Note *note = &play->notes[note_idx];
+    if (note->in_vel == 0 || note->out_vel != 0)
+        return;
+
+    float pos = (float)(play->position + offset - note->start);
+    double temp;
+    pos = modf(pos / ((float)play->sample_rate / frequencies[note_idx]), &temp);
+
+    float sample = (pos*0.4) - 0.2;
+
+    float vel = (float)note->in_vel / 127.0;
+    vel = 0.33 + (vel * 0.67);
+
+    s->sample += sample * vel;
     s->volume += vel;
 }
 
 static Instrument instrument_table[] = {
+    sawtooth,
     square
 };
 

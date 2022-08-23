@@ -65,9 +65,9 @@ int audio_callback(jack_nframes_t n_frames, void *extra)
         u8 *buf = talloc_get(&state.alloc, len);
         for (int j = 0; j < len; j++) {
             buf[j] = ev.buffer[j];
-            //printf("%02x ", buf[j]);
+            printf("%02x ", buf[j]);
         }
-        //putchar('\n');
+        putchar('\n');
 
         state.events[i].time = ev.time;
         state.events[i].size = len;
@@ -134,7 +134,12 @@ int main(int argc, char **argv)
     input_port = jack_port_register(client, "midi_in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
     output_port = jack_port_register(client, "audio_out", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
 
-    int res = jack_activate(client);
+    int res = 0;
+
+    //res = jack_set_buffer_size(client, 1024);
+    //printf("jack_set_buffer_size(1024) : %d\n", res);
+
+    res = jack_activate(client);
     if (res != 0) {
         printf("Failed to activate JACK client (%d)\n", res);
         return 1;
