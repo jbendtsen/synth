@@ -42,6 +42,24 @@ void talloc_close(Temp_Allocator *alloc)
     alloc->buf = NULL;
 }
 
+u8 *read_whole_file(const char *fname, int *out_size)
+{
+    FILE *f = fopen(fname, "rb");
+    if (!f) return NULL;
+
+    fseek(f, 0, SEEK_END);
+    int sz = ftell(f);
+    rewind(f);
+    if (sz < 1) return NULL;
+
+    u8 *buf = malloc(sz);
+    fread(buf, 1, sz, f);
+    fclose(f);
+
+    if (out_size) *out_size = sz;
+    return buf;
+}
+
 static jack_port_t *input_port = NULL;
 static jack_port_t *output_port = NULL;
 
@@ -136,9 +154,6 @@ int main(int argc, char **argv)
 
     int res = 0;
 
-    //res = jack_set_buffer_size(client, 1024);
-    //printf("jack_set_buffer_size(1024) : %d\n", res);
-
     res = jack_activate(client);
     if (res != 0) {
         printf("Failed to activate JACK client (%d)\n", res);
@@ -153,6 +168,7 @@ int main(int argc, char **argv)
     read(read_exit_fd, &code, 1);
 
     jack_client_close(client);
+    close_synthesizer(&state);
     talloc_close(&state.alloc);
     return 0;
 }

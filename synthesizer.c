@@ -10,6 +10,11 @@ void init_synthesizer(Playback *play)
     instrument_table = load_instruments(play, &n_instruments);
 }
 
+void close_synthesizer(Playback *play)
+{
+    close_instruments();
+}
+
 void update_playback(Playback *play, u64 offset, int ev_idx)
 {
     int size = play->events[ev_idx].size;

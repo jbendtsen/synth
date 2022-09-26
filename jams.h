@@ -21,6 +21,7 @@ void talloc_close(Temp_Allocator *alloc);
 typedef struct {
     u64 start;
     u64 end;
+    float prev_sample;
     u32 ins_data;
     u16 instrument;
     u8 in_vel;
@@ -50,9 +51,22 @@ typedef struct {
     float volume;
 } Sample_Info;
 
+typedef struct {
+    float *buf;
+    int len;
+    int rate;
+} Track;
+
 typedef void (*Instrument)(Playback*, u64, int, Sample_Info*);
 
+u8 *read_whole_file(const char *fname, int *out_size);
+
 void init_synthesizer(Playback *play);
+void close_synthesizer(Playback *play);
 void synthesize(Playback *play, float *out, int n_samples);
 
 Instrument *load_instruments(Playback *play, int *n_instruments);
+void close_instruments();
+
+Track read_wav_file_as_mono(const char *fname);
+void close_track(Track *t);
