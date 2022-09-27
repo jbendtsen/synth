@@ -86,7 +86,7 @@ Track read_wav_file_as_mono(const char *fname)
     int is_float = header.format != 1;
     if (!is_float) {
         sample_w = header.bits_per_sample / 8;
-        if (sample_w != 1 && sample_w != 2) {
+        if (sample_w != 1 && sample_w != 2 && sample_w != 3) {
             printf("wav.c: unsupported bits per sample (%d)\n", header.bits_per_sample);
             fclose(f);
             return track;
@@ -114,14 +114,15 @@ Track read_wav_file_as_mono(const char *fname)
         }
     }
     else {
-        char *in_8 = (char*)buf;
-        short *in_16 = (short*)buf;
+        char *in = (char*)buf;
         for (int i = 0; i < n_samples; i++) {
             float sample = 0.0;
             for (int j = 0; j < header.n_channels; j++) {
-                sample += sample_w == 1 ? (float)*in_8 / 128.0 : (float)*in_16 / 32768.0;
-                in_8++;
-                in_16++;
+                int s = in[0];
+                s = ((sample_w <= 1) * s) + ((sample_w > 1) * ((s & 0xff) + (in[1] * 0x100)));
+                s = ((sample_w <= 2) * s) + ((sample_w > 2) * ((s & 0xffff) + (in[2] * 0x10000)));
+                sample += (float)s / (float)(1 << (8*sample_w-1));
+                in += sample_w;
             }
             *p++ = sample / (float)header.n_channels;
         }
